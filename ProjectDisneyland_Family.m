@@ -98,8 +98,8 @@ for k = 1 : 3
             end
         end
     end
-    % constraints for teen and kid after the first part of the problem
-    if(k == 2 || k == 3)
+    
+    if(k == 2 || k == 3)                                                                                                       % Constraints for the excluded attractions in Phase 2
         for i = 1 : N
             if (Restrictions(i) == 1)
                 for j = 1 : N+1
