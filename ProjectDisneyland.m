@@ -8,21 +8,21 @@
 
 
 % Define Variables
-N = 46; %number of attractions
-x = binvar (N+2,N+2, 'full'); % attractions binary variables
-u = intvar (N+1,1);  % subtours integer variables
+N = 46;                             % Number of attractions
+x = binvar (N+2,N+2, 'full');       % Attractions as binary variables
+u = intvar (N+1,1);                 % Subtours integer variables
 
 % Define Some Values for the constraints
-Tmax = 60; % Number of available time in minutes
-Age = 3; % Preschoolers = 1, Kid = 2, Tween = 3, Adults/Teens = 4
-RateGroup = 3; % Preschoolers = 1, Kid = 2, Tween = 3, Teens = 4, Adults = 5, Kid+Teen+Adult = 6, Preschooler+Tween+Adult = 7
+Tmax = 60;                          % Number of available time in minutes
+Age = 3;                            % Preschoolers = 1, Kid = 2, Tween = 3, Adults/Teens = 4
+RateGroup = 3;                      % Preschoolers = 1, Kid = 2, Tween = 3, Teens = 4, Adults = 5, Kid+Teen+Adult = 6, Preschooler+Tween+Adult = 7
 
-% Define Data Used for each attraction
-walk = csvread('MinutesWalkingModified.csv'); % Minutes of walking between attractions
-Dur = csvread('DurationModified.csv'); % Duration of each attraction
-Wait = csvread('WaitTimeModified.csv'); % Wait time of each attraction
-Ratings = csvread('RatingsModified.csv'); % Columns: Preschoolers | Kids | Tweens | Teens | Adults | Kid+Teen+Adult | Preschooler+Tween+Adult
-AgeR = csvread('Age RestrictionsModified.csv'); % Columns: Preschoolers, Kids, Tweens, Adults/Teens
+% Define Data Used for each attraction from csv files
+walk = csvread('MinutesWalkingModified.csv');       % Minutes of walking between attractions
+Dur = csvread('DurationModified.csv');              % Duration of each attraction
+Wait = csvread('WaitTimeModified.csv');             % Wait time of each attraction
+Ratings = csvread('RatingsModified.csv');           % Columns: Preschoolers | Kids | Tweens | Teens | Adults | Kid+Teen+Adult | Preschooler+Tween+Adult
+AgeR = csvread('Age RestrictionsModified.csv');     % Columns: Preschoolers | Kids | Tweens | Adults/Teens
 
 % Calculation of total spending time for each attraction
 t = zeros(N+2);
@@ -39,22 +39,22 @@ AgeRes = AgeR(Age,1:N);
 
 
 % Define all the constraints of the problem
-Constraints = [sum(sum(x.*t)) <= Tmax, sum(x(1,2:N+2)) == 1, sum(x(1:N+1,N+2)) == 1, sum(x(:,1)) == 0, sum(x(N+2,:)) == 0];
+Constraints = [sum(sum(x.*t)) <= Tmax, sum(x(1,2:N+2)) == 1, sum(x(1:N+1,N+2)) == 1, sum(x(:,1)) == 0, sum(x(N+2,:)) == 0];     % Constraints (3.6), (3.3) and ()
 for i = 1 : N+1
-    Constraints = [Constraints, 2 <= u(i) <= N+2];
+    Constraints = [Constraints, 2 <= u(i) <= N+2];                                                                              % Constraint (3.7)
 end
 for i = 2 : N+1
-    Constraints = [Constraints, sum(x(i,2:N+2)) <= 1, sum(x(1:N+1,i)) <= 1, sum(x(i,2:N+2))-sum(x(1:N+1,i)) == 0];
+    Constraints = [Constraints, sum(x(i,2:N+2)) <= 1, sum(x(1:N+1,i)) <= 1, sum(x(i,2:N+2))-sum(x(1:N+1,i)) == 0];              % Constraint (3.5)
 end
 for i = 1 : N+2
-    Constraints = [Constraints, x(i,i) == 0];
+    Constraints = [Constraints, x(i,i) == 0];                                                                                   % Constraint (3.4)
 end
 for i = 2 : N+2
     for j = 2 : N+2
-        Constraints = [Constraints, x(i,j)*(N+1) + u(i-1)-u(j-1) <= N];
+        Constraints = [Constraints, x(i,j)*(N+1) + u(i-1)-u(j-1) <= N];                                                         % Constraint (3.8)
     end
 end
-for i = 1 : N
+for i = 1 : N                                                                                                                   % Constraints for age restrictions
     % if statement to take only the restrictions for the specific age group between the N attractions of table AgeRes
     if (AgeRes(i) == 1) % If the attraction is not permitted (=1)
         for j = 1 : N+1
