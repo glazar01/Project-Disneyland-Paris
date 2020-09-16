@@ -64,7 +64,7 @@ for k = 1 : 3
     AgeRes2 = AgeR(Age2,1:N);       % Vector consists of restristrictions for age group Age2
 
     % Define constraints T
-    Constraints = [sum(sum(x.*t)) <= Tmax, sum(x(1,2:N+2)) == 1, sum(x(1:N+1,N+2)) == 1, sum(x(:,1)) == 0, sum(x(N+2,:)) == 0]; % Constraints (3.6), (3.3) and ()
+    Constraints = [sum(sum(x.*t)) <= Tmax, sum(x(1,2:N+2)) == 1, sum(x(1:N+1,N+2)) == 1, sum(x(:,1)) == 0, sum(x(N+2,:)) == 0]; % Constraints (3.6) and (3.3)
     for i = 1 : N+1
         Constraints = [Constraints, 2 <= u(i) <= N+2];                                                                          % Constraint (3.7)
     end
