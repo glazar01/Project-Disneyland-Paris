@@ -1,6 +1,10 @@
 % Author: Georgia Lazaridou
 % Last Date Modified: 16/09/2020
-% Description: 
+% Description: This m-file is an extension of the ProjectDisneyland.m which introduces the idea of solving the optimization problem as in ProjectDisneyland.m but now for different
+% age groups in order to satisfy a whole family. So there are two Phases (1 and 2) where in Phase 1 the family plays as a whole and in Phase 2 Kids are with their Parents and the
+% Teenagers are playing alone. There is a for loop (k=1,2,3) in order to solve the problem three different times. In Phase 2 (k=2 for Kid and Parents and k=3 for Teenagers) the
+% attractions that have been visited in Phase 1 are excluded. Finally the total rate of each family member as well as the solution of the problems are printed in the console after
+% the problem is solved.
 
 % Initializing the total rating for all family members' age groups
 Total_Rate_Kid = 0;
@@ -36,12 +40,13 @@ for k = 1 : 3
     RateGroup4 = 8;                 % Select 8 for the Adults with the Kid
 
     % Define Data Used from csv files
-    walk = csvread('MinutesWalkingModified.csv'); % minutes of walking between attractions tij
-    Dur = csvread('DurationModified.csv');
-    Wait = csvread('WaitTimeModified.csv');
-    Ratings = csvread('RatingsModified2.csv'); % Preschoolers | Kids | Tweens | Teens | Adults | Kid+Teen+Adult | Preschooler+Tween+Adult | Kid & Adults
-    AgeR = csvread('Age RestrictionsModified.csv'); % Preschoolers, Kids, Tweens, Adults/Teens
+    walk = csvread('MinutesWalkingModified.csv');   % Minutes of walking between attractions tij
+    Dur = csvread('DurationModified.csv');          % Duration of each attraction
+    Wait = csvread('WaitTimeModified.csv');         % Wait time of each attraction 
+    Ratings = csvread('RatingsModified2.csv');      % Columns: Preschoolers | Kids | Tweens | Teens | Adults | Kid+Teen+Adult | Preschooler+Tween+Adult | Kid & Adults
+    AgeR = csvread('Age RestrictionsModified.csv'); % Columns: Preschoolers | Kids | Tweens | Adults/Teens
 
+    % Calculation of table t which containts the total time (Minutes of walking from i to j + Duration of i + Wait time of i)
     t = zeros(N+2);
     for i = 1 : N+2
         for j = 1 : N+2
@@ -50,32 +55,32 @@ for k = 1 : 3
     end
 
     % Define Vectors of Rate and Age Restrictions for the age groups of the family
-    Rate = Ratings(:,RateGroup);            % the rate used in objective function
-    Rate1 = Ratings(:,RateGroup1); % ratings for kid
-    Rate2 = Ratings(:,RateGroup2); % ratings for teens
-    Rate3 = Ratings(:,RateGroup3); % ratings for adults
-    Rate4 = Ratings(:,RateGroup4); % ratings for adults and kid
-    AgeRes1 = AgeR(Age1,1:N); % vector consists of restristrictions for age group 1,2,3 or 4
-    AgeRes2 = AgeR(Age2,1:N); % vector consists of restristrictions for age group 1,2,3 or 4
+    Rate = Ratings(:,RateGroup);    % The rate used in objective function (the average) for the Phase 1
+    Rate1 = Ratings(:,RateGroup1);  % Ratings for kid
+    Rate2 = Ratings(:,RateGroup2);  % Ratings for teens
+    Rate3 = Ratings(:,RateGroup3);  % Ratings for adults
+    Rate4 = Ratings(:,RateGroup4);  % Ratings for adults and kid
+    AgeRes1 = AgeR(Age1,1:N);       % Vector consists of restristrictions for age group Age1
+    AgeRes2 = AgeR(Age2,1:N);       % Vector consists of restristrictions for age group Age2
 
     % Define constraints T
-    Constraints = [sum(sum(x.*t)) <= Tmax, sum(x(1,2:N+2)) == 1, sum(x(1:N+1,N+2)) == 1, sum(x(:,1)) == 0, sum(x(N+2,:)) == 0];
+    Constraints = [sum(sum(x.*t)) <= Tmax, sum(x(1,2:N+2)) == 1, sum(x(1:N+1,N+2)) == 1, sum(x(:,1)) == 0, sum(x(N+2,:)) == 0]; % Constraints (3.6), (3.3) and ()
     for i = 1 : N+1
-        Constraints = [Constraints, 2 <= u(i) <= N+2];
+        Constraints = [Constraints, 2 <= u(i) <= N+2];                                                                          % Constraint (3.7)
     end
     for i = 2 : N+1
-        Constraints = [Constraints, sum(x(i,2:N+2)) <= 1, sum(x(1:N+1,i)) <= 1, sum(x(i,2:N+2))-sum(x(1:N+1,i)) == 0];
+        Constraints = [Constraints, sum(x(i,2:N+2)) <= 1, sum(x(1:N+1,i)) <= 1, sum(x(i,2:N+2))-sum(x(1:N+1,i)) == 0];          % Constraint (3.5)
     end
     for i = 1 : N+2
-        Constraints = [Constraints, x(i,i) == 0];
+        Constraints = [Constraints, x(i,i) == 0];                                                                               % Constraint (3.4)
     end
     for i = 2 : N+2
         for j = 2 : N+2
-            Constraints = [Constraints, x(i,j)*(N+1) + u(i-1)-u(j-1) <= N];
+            Constraints = [Constraints, x(i,j)*(N+1) + u(i-1)-u(j-1) <= N];                                                     % Constraint (3.8)
         end
     end
-    for i = 1 : N
-        % if statement to take the restrictions for the specific age group
+    for i = 1 : N                                                                                                               % Constraints for age restrictions
+        % if statement to take the age restrictions for the specific age group
         % between the N attractions of table AgeRes1 and AgeRes2
         if(k == 1 || k == 2)
             if (AgeRes1(i) == 1 || AgeRes2(i) == 1)
@@ -104,9 +109,9 @@ for k = 1 : 3
         end
     end
 
-    % Define an objective
-    %r = Rate(:,RateGroup);
-    xx = x(1:N+1,2:N+1); %for multiply with rate in objective
+    % Define the objective function
+    xx = x(1:N+1,2:N+1); % For multiply with rate in the objective function
+    % The objective is different each time because for each k (=1,2 or 3) the age groups are different and we take a different average of rating(=Rate, Rate4 or Rate 2 accordingly)
     if (k == 1)
         Objective = -sum(sum(xx*Rate))
     else
@@ -117,17 +122,15 @@ for k = 1 : 3
         end
     end
         
-    % Set some options for YALMIP and solver
-    % options = sdpsettings('verbose',1,'solver','quadprog','quadprog.maxiter',100);
+    % Set some options for YALMIP and solve
     options = sdpsettings('verbose',1,'solver','gurobi','gurobi.timelimit',7200);
-
-    saveampl(Constraints,Objective,'mymodel46_1');
 
     % Solve the problem
     sol = optimize(Constraints,Objective,options);
 
-
     % Analyze error flags
+    % Total_Rate_AgeGroup: The total rate (in both Phases) achieved by this age group (AgeGroup = Kid, Teen or Adult in this case)
+    % Total_Rate_Family_AgeGroup: The total rate (in Phase 1) achieved by this age group (AgeGroup = Kid, Teen or Adult in this case)
     if sol.problem == 0
         % Extract and display value
         display('solution for tmax=');
@@ -259,3 +262,5 @@ for k = 1 : 3
     end
     
 end % End of for loop k=1:3
+
+% End of the program
